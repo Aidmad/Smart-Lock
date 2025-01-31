@@ -110,10 +110,25 @@ class _SmartLockPageState extends State<SmartLockPage> {
     try {
       await device.connect();
 
-      // TODO: Replace with actual smart lock password validation
-      // This is a placeholder for demo purposes
-      if (password == "1234") {
-        // Add device to whitelist
+      // Get the service and characteristic for password verification
+      List<BluetoothService> services = await device.discoverServices();
+      // TODO: Replace with your smart lock's actual service and characteristic UUIDs
+      BluetoothService? lockService = services.firstWhere(
+          (service) => service.uuid.toString() == 'YOUR_LOCK_SERVICE_UUID');
+      BluetoothCharacteristic? passwordCharacteristic =
+          lockService.characteristics.firstWhere((char) =>
+              char.uuid.toString() == 'YOUR_PASSWORD_CHARACTERISTIC_UUID');
+
+      // Send password to smart lock for verification
+      await passwordCharacteristic.write(password.codeUnits);
+
+      // Read response from smart lock
+      List<int> response = await passwordCharacteristic.read();
+      bool isPasswordValid =
+          response[0] == 1; // Assuming smart lock returns 1 for valid password
+
+      if (isPasswordValid) {
+        // Add device to whitelist only if smart lock verified the password
         setState(() {
           whitelistedDevices.add(device.id.toString());
         });
@@ -136,9 +151,17 @@ class _SmartLockPageState extends State<SmartLockPage> {
     try {
       await device.connect();
 
-      // TODO: Implement actual unlock command to smart lock
-      // This would involve writing to a specific characteristic
-      // Example: await device.writeCharacteristic(unlockCharacteristic, [1]);
+      // Get the service and characteristic for unlocking
+      List<BluetoothService> services = await device.discoverServices();
+      // TODO: Replace with your smart lock's actual service and characteristic UUIDs
+      BluetoothService? lockService = services.firstWhere(
+          (service) => service.uuid.toString() == 'YOUR_LOCK_SERVICE_UUID');
+      BluetoothCharacteristic? unlockCharacteristic =
+          lockService.characteristics.firstWhere((char) =>
+              char.uuid.toString() == 'YOUR_UNLOCK_CHARACTERISTIC_UUID');
+
+      // Send unlock command to smart lock
+      await unlockCharacteristic.write([1]); // Assuming 1 is the unlock command
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Door unlocked successfully')),
